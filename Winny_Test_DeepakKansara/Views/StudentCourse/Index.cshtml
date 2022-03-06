@@ -1,0 +1,288 @@
+﻿@model List<Winny_Test_DeepakKansara.Models.Student>
+@{
+    ViewBag.Title = "Index";
+}
+<link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="Stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css">
+
+<div>
+    <button type="button" class="btn btn-primary" onclick="Open('0');">+ Add</button>
+    <table class="table table-bordered table-responsive table-striped" id="tblStudent">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Age(Years)</th>
+                <th>Gender</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>@Model[i].Name</td>
+                    <td>@Model[i].DateOfBirth</td>
+                    <td>
+                        @{
+                            if (Convert.ToInt32(Model[i].Age) <= 10)
+                            {
+                                <span style="color:red">@Model[i].Age</span>
+                            }
+                            else
+                            {
+                                <span>@Model[i].Age</span>
+                            }
+                        }
+                    </td>
+                    <td>@Model[i].Gender</td>
+                    <td>
+                        <a id="btnUpDt" href="javascript:void();" onclick="edit(@Model[i].StudentId)" class="btn btn-warning">UpDate</a>
+                        &nbsp;&nbsp;
+                        <a id="btnDlt" href="@Url.Content("~/StudentCourse/DeleteStudent?id="+Model[i].StudentId)" class="btn btn-danger" onclick="return confirm('Are sure wants to delete?');">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <input type="hidden" id="hdnStudentId" value="0" />
+                            <input type="hidden" id="hdnDateOfBirth" />
+                            <input type="hidden" id="hdnGender" />
+                            <input type="hidden" id="hdnCourseId" />
+                            <label for="recipient-name" class="col-form-label">Name:</label>
+                            <input type="text" class="form-control" id="Name" name="Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label">Date of Birth:</label>
+                            <input type="text" class="form-control" id="DateOfBirth" name="DateOfBirth">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label">Gender:</label>
+                            <select name="Gender" class="form-control" id="Gender">
+                                <option value="0" selected>Select</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label">Course:</label>
+                            <select name="CourseId" class="form-control" id="CourseId">
+                                <option value="0">Select</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="btnAddEdit" onclick="AddEdit();">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.4.1.js"></script>
+<script src="~/Scripts/bootstrap.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js" integrity="sha512-T/tUfKSV1bihCnd+MxKD0Hm1uBBroVYBOYSk1knyvQ9VyZJpc/ALb4P0r6ubwVPSGB2GvjeoMAJJImBG12TiaQ==" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.js" integrity="sha512-z8IfZLl5ZASsWvr1syw5rkpo2HKBexjwzYDaUkIfoWo0aEqL/MgGKniDouh5DmsD9YrisbM+pihyCKIHL9VucQ==" crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function () {
+        LazyLoading();
+        $.ajax({
+            type: "POST",
+            url: "/StudentCourse/GetCourse",
+            data: '',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            async: true,
+            success: function (d) {
+                $("#CourseId").html('');
+                $("#CourseId").append($("<option></option>").val('0').html("Select"));
+                $.each(d, function (i, Course) {
+                    $("#CourseId").append($("<option></option>").val(Course.CourseId).html(Course.Course));
+                });
+            },
+            failure: function (d) {
+                alert('Something went wrong');
+            },
+            error: function (d) {
+                alert('Something went wrong');
+            }
+        });
+    });
+
+    var LazyLoading = function () {
+        var table = $('#tblStudent').DataTable({
+            "processing": true,
+            "responsive": true,
+            "lengthMenu": [7, 10, 25, 50],
+            "dom": "Rfrtlip"
+        });
+
+        jQuery('#tblStudent_wrapper .dataTables_filter input').addClass("form-control input-small input-inline"); // modify table search input
+        jQuery('#tblStudent_wrapper .dataTables_length select').addClass("form-control input-xsmall"); // modify table per page dropdown
+    }
+
+    function AddEdit() {
+        debugger;
+        $('#btnAddEdit').prop("disabled", true);
+        var t1 = $("#Name").val();
+        var t2 = $("#DateOfBirth").val();
+        var t3 = $("#Gender").val();
+        var t4 = diff_years(new Date($("#DateOfBirth").val()), new Date());
+        //t4 = moment($("#DateOfBirth").val(), "YYYYMMDD").fromNow().split(' ');
+        var t5 = $("#CourseId").val();
+        var t6 = $("#hdnStudentId").val();
+
+        if (t1 == undefined || t1 == null || t1.trim() == '') {
+            alert("Please enter Name");
+            $('#btnAddEdit').removeAttr("disabled");
+            return false;
+        }
+        else if (t2 == undefined || t2 == null || t2.trim() == '') {
+            alert("Please enter date of birth");
+            $('#btnAddEdit').removeAttr("disabled");
+            return false;
+        }
+        else if (t3 == undefined || t3 == null || t3.trim() == '0') {
+            var dt1 = new Date($("#DateOfBirth").val());
+            var dt2 = new Date();
+            console.log(diff_years(dt1, dt2));
+            alert("Please select gender");
+            $('#btnAddEdit').removeAttr("disabled");
+            return false;
+        }
+        else if (t4 == undefined || t4 == null || parseInt(t4) < 8) {
+            alert("Age should be more than 8 years");
+            $('#btnAddEdit').removeAttr("disabled");
+            return false;
+        }
+        else if (t5 == undefined || t5 == null || t5.trim() == '0') {
+            alert("Please select course");
+            $('#btnAddEdit').removeAttr("disabled");
+            return false;
+        }
+        else {
+            $.ajax({
+                type: "POST",
+                url: "/StudentCourse/AddEdit",
+                data: JSON.stringify({
+                    'StudentId': t6,
+                    'Name': t1,
+                    'DateOfBirth': t2,
+                    'Gender': t3,
+                    'CourseId': t5
+                }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                async: true,
+                success: function (d) {
+                    if (d == true) {
+                        location.reload();
+                    }
+                },
+                failure: function (d) {
+                    alert('Something went wrong');
+                    $('#btnAddEdit').removeAttr("disabled");
+                },
+                error: function (d) {
+                    alert('Something went wrong');
+                    $('#btnAddEdit').removeAttr("disabled");
+                }
+            });
+        }
+    }
+
+    function edit(StudentId) {
+        StudentId = StudentId == undefined ? 0 : StudentId;
+        $.ajax({
+            type: "POST",
+            url: "/StudentCourse/AddEditStudent",
+            data: JSON.stringify({
+                'id': StudentId
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            async: true,
+            success: function (d) {
+                if (d != undefined && d != null) {
+                    Open(StudentId);
+                    debugger;
+                    $('#hdnStudentId').val(d.StudentId);
+                    $('#Name').val(d.Name);
+                    $('#DateOfBirth').val(d.DateOfBirth);
+                    $('#Gender').val(d.Gender).prop('selected', true);
+                    $('#CourseId').val(d.CourseId).prop('selected', true);
+                }
+            },
+            failure: function (d) {
+                alert('Something went wrong');
+                $('#btnAddEdit').removeAttr("disabled");
+            },
+            error: function (d) {
+                alert('Something went wrong');
+                $('#btnAddEdit').removeAttr("disabled");
+            }
+        });
+    }
+
+    function Open(StudentId) {
+        if (StudentId != undefined && StudentId != null && parseInt(StudentId) > 0) {
+            $('#exampleModalLabel').text('Edit Student');
+            $('#btnAddEdit').text('Edit');
+        }
+        else {
+            $('#exampleModalLabel').text('Add Student');
+            $('#btnAddEdit').text('Add');
+        }
+        $('#exampleModal').modal('show');
+        $('input[id$="DateOfBirth"]').datepicker({
+            dateFormat: 'dd/mm/yyyy'
+        });
+    }
+
+    function Close() {
+        $('#exampleModal').modal('hide');
+        $('#StudentId').val('0');
+        $('#Name').val('');
+        $('#DateOfBirth').val('');
+        $('#Gender').val('0').prop('selected', true);
+        $('#CourseId').val('0').prop('selected', true);
+    }
+
+    //function calcDate(date2) {
+    //    date1 = new Date()
+    //    var diff = Math.floor(date1.getTime() - date2.getTime());
+    //    var day = 1000 * 60 * 60 * 24;
+
+    //    var years = Math.floor(months / 12);
+
+    //    var message = date2.toDateString();
+    //    message += " was "
+    //    message += days + " days "
+    //    message += months + " months "
+    //    message += years + " years ago \n"
+
+    //    return message
+    //}
+    function diff_years(dt2, dt1) {
+        var diff = (dt2.getTime() - dt1.getTime()) / 1000;
+        diff /= (60 * 60 * 24);
+        return Math.abs(Math.round(diff / 365.25));
+
+    }
+</script>
